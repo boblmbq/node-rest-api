@@ -12,10 +12,34 @@ class ContactsService {
   };
 
   createContact = async (body) => {
-    const contact = await ContactsModel.create(body);
-    return contact || null;
+    const createdContact = await ContactsModel.create(body);
+    return createdContact || null;
+  };
+
+  deleteContact = async (id) => {
+    const deletedContact = await ContactsModel.findByIdAndDelete(id);
+    return deletedContact || null;
+  };
+
+  updateContact = async (id, body) => {
+    const updatedContact = await ContactsModel.findByIdAndUpdate(
+      id,
+      { ...body },
+      { new: true, runValidators: true }
+    );
+
+    return updatedContact || null;
+  };
+
+  updateStatusContact = async (id, body) => {
+    const updatedStatusContact = await ContactsModel.findByIdAndUpdate(
+      id,
+      { ...body },
+      { new: true, runValidators: true }
+    );
+
+    return updatedStatusContact || null;
   };
 }
 
-
-module.exports = new ContactsService()
+module.exports = new ContactsService();
