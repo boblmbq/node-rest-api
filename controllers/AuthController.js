@@ -6,18 +6,43 @@ class AuthController {
     this.service = AuthService;
   }
 
-  createUser = asyncHandler(async (req, res) => {
-    const { body } = req;
-    const foudnUser = await this.service.findUser(body.email)
-    
+  createUser = asyncHandler(async ({ body }, res) => {
+    const foudnUser = await this.service.findUser(body.email);
+
     if (foudnUser) {
-      res.status(409)
-      new Error("User with this email, allready exists, want to login?")
+      res.status(409);
+      new Error("Cannot create an allready existed account");
     }
 
     const createdUser = await this.service.createUser(body);
     const { name, email } = createdUser;
     res.status(201).json({ name, email });
+  });
+
+  loginUser = asyncHandler(async ({ body }, res) => {
+    const { email, password } = body;
+    const foundUser = await this.service.findUser(email);
+
+    console.log(foundUser.password);
+
+    if (!foundUser) {
+      res.status(401);
+      throw Error(`Bad request, unauthorised`);
+    }
+
+    const loginedUser = await this.service.loginUser(
+      password,
+      foundUser.password
+    );
+
+    if (!loginedUser) {
+      res.status(401);
+      throw new Error("Email or password is invalid");
+    }
+
+   const token = "blablabla";
+
+    res.json({ token });
   });
 }
 
