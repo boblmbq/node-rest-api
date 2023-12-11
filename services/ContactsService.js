@@ -1,4 +1,3 @@
-const contacts = require("../models/contacts");
 const ContactModel = require("../models/contacts");
 
 class ContactsService {
