@@ -1,5 +1,6 @@
 const asyncHandler = require("express-async-handler");
 const AuthService = require("../services/AuthService");
+const jwt = require("jsonwebtoken");
 
 class AuthController {
   constructor() {
@@ -23,8 +24,6 @@ class AuthController {
     const { email, password } = body;
     const foundUser = await this.service.findUser(email);
 
-    console.log(foundUser.password);
-
     if (!foundUser) {
       res.status(401);
       throw Error(`Bad request, unauthorised`);
@@ -40,7 +39,11 @@ class AuthController {
       throw new Error("Email or password is invalid");
     }
 
-   const token = "blablabla";
+    const payload = { id: foundUser._id };
+
+    const token = jwt.sign(payload, process.env.SECRET_KEY, {
+      expiresIn: "23h",
+    });
 
     res.json({ token });
   });
