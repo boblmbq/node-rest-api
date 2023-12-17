@@ -6,9 +6,9 @@ class AuthService {
     this.User = UserModel;
   }
 
-  findUser = async (email) => {
-    const foundUser = await this.User.find({ email });
-    return foundUser[0] || null;
+  findUser = async (req, option) => {
+    const foundUser = await this.User.findOne({ [option]: req });
+    return foundUser || null;
   };
 
   createUser = async (body) => {

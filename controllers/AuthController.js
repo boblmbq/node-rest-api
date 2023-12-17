@@ -1,6 +1,7 @@
 const asyncHandler = require("express-async-handler");
 const AuthService = require("../services/AuthService");
 const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
 
 class AuthController {
   constructor() {
@@ -12,40 +13,56 @@ class AuthController {
 
     if (foudnUser) {
       res.status(409);
-      new Error("Cannot create an allready existed account");
+      new Error("Email in use");
     }
 
     const createdUser = await this.service.createUser(body);
-    const { name, email } = createdUser;
-    res.status(201).json({ name, email });
+
+    res.status(201).json({
+      code: 201,
+      message: "Created",
+      user: {
+        email: createdUser.email,
+        subscription: createdUser.subscription,
+      },
+    });
   });
 
   loginUser = asyncHandler(async ({ body }, res) => {
     const { email, password } = body;
-    const foundUser = await this.service.findUser(email);
+    const user = await this.service.findUser(email, "email");
 
-    if (!foundUser) {
+    if (!user || !bcrypt.compareSync(password, user.password)) {
       res.status(401);
-      throw Error(`Bad request, unauthorised`);
+      throw Error("Email or password is wrong");
     }
 
-    const loginedUser = await this.service.loginUser(
-      password,
-      foundUser.password
-    );
-
-    if (!loginedUser) {
-      res.status(401);
-      throw new Error("Email or password is invalid");
-    }
-
-    const payload = { id: foundUser._id };
+    const payload = { id: user._id };
 
     const token = jwt.sign(payload, process.env.SECRET_KEY, {
       expiresIn: "23h",
     });
 
-    res.json({ token });
+    user.token = token;
+    await user.save();
+
+    res.status(200).json({
+      code: 200,
+      message: "ok",
+      token: user.token,
+      user: {
+        email: user.email,
+        subscription: user.subscription,
+      },
+    });
+  });
+
+  logout = asyncHandler(async (_, res) => {
+    const { locals } = res;
+    const user = await this.service.findUser(locals.user.id, "_id");
+    user.token = null;
+    await user.save();
+    res.status(204).json({ code: 204, message: "No Content" });
   });
 }
 

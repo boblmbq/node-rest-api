@@ -1,26 +1,16 @@
 const jwt = require("jsonwebtoken");
-const userModel = require("../models/user");
 
-const authenticate = (req, res, next) => {
-  const { authorization } = req.headers;
-  const [bearer, token] = authorization.split(" ");
-  if (bearer !== "Bearer") {
-    res.status(401);
-    throw Error("Bad request");
-  }
+module.exports = (req, res, next) => {
+  const [bearer, token] = req.headers.authorization.split(" ");
 
   try {
-    const { id } = jwt.verify(token, process.env.SECRET_KEY);
-    const user = userModel.findById(id);
-
-    if (!user) {
-      res.status(401)
-      throw Error("Not found")
+    if (bearer === "Bearer" && token) {
+      const decoded = jwt.verify(token, process.env.SECRET_KEY);
+      res.locals.user = decoded;
+      next();
     }
-
-    next(token)
   } catch (error) {
     res.status(401);
-    throw Error("Bad request");
+    throw Error("Not authorized");
   }
 };

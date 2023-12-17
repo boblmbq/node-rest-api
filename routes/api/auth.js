@@ -3,6 +3,7 @@ const validateBody = require("../../middlewares/validateBody");
 const router = Router();
 const { registerSchema, loginSchema } = require("../../schemas/usersJoiSchema");
 const AuthController = require("../../controllers/AuthController");
+const authenticate = require("../../middlewares/authenticate");
 
 router.post(
   "/register",
@@ -11,5 +12,7 @@ router.post(
 );
 
 router.post("/login", validateBody(loginSchema), AuthController.loginUser);
+
+router.put("/logout", authenticate, AuthController.logout);
 
 module.exports = router;
