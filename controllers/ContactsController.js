@@ -4,8 +4,10 @@ const asyncHandler = require("express-async-handler");
 class ContactsController {
   getAllContacts = asyncHandler(async (req, res) => {
     const { id: owner } = res.locals.user;
+    
     const { page = 1, limit = 10 } = req.query;
     const skip = (page - 1) * limit;
+
     const contacts = await ContactsService.getContacts(owner, skip, limit);
 
     if (!contacts) {

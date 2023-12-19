@@ -2,6 +2,7 @@ const asyncHandler = require("express-async-handler");
 const UsersService = require("../services/UsersService");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
+const { subscribe } = require("../app");
 
 class UsersController {
   constructor() {
@@ -66,7 +67,6 @@ class UsersController {
   });
 
   getCurrentContacts = asyncHandler(async (req, res) => {
-
     const { id } = res.locals.user;
 
     const user = await this.service.findUser(id, "_id");
@@ -75,6 +75,31 @@ class UsersController {
       res.status(401);
       throw Error("Bad request, unauthorized");
     }
+
+    res.status(200).json({
+      code: 200,
+      message: "ok",
+      user: { email: user.email, subscription: user.subscription },
+    });
+  });
+
+  updateSubscription = asyncHandler(async (req, res) => {
+    const { id } = res.locals.user;
+
+    const user = await this.service.findUser(id, "_id");
+
+    console.log(user);
+
+    if (!user) {
+      res.status(401);
+      throw Error("Bad request, unauthorized");
+    }
+
+    const newSubscription = req.body.subscription;
+    console.log(typeof newSubscription);
+
+    user.subscription = newSubscription;
+    await user.save();
 
     res.status(200).json({
       code: 200,

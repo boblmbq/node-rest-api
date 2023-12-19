@@ -11,11 +11,14 @@ const loginSchema = Joi.object({
   password: Joi.string().min(6).required(),
 });
 
-
+const updateSubsSchema = Joi.object({
+  subscription: Joi.string().valid("starter", "pro", "business"),
+});
 
 const usersJoiSchema = {
   registerSchema,
   loginSchema,
+  updateSubsSchema,
 };
 
- module.exports = usersJoiSchema
+module.exports = usersJoiSchema;
