@@ -5,8 +5,12 @@ class ContactsService {
     this.ContactModel = ContactModel;
   }
 
-  getContacts = async () => {
-    const contacts = await this.ContactModel.find({});
+  getContacts = async (owner, skip, limit) => {
+    const contacts = await this.ContactModel.find(
+      { owner },
+      "name phone email favorite",
+      { skip, limit }
+    );
     return contacts || null;
   };
 

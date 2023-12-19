@@ -3,7 +3,10 @@ const asyncHandler = require("express-async-handler");
 
 class ContactsController {
   getAllContacts = asyncHandler(async (req, res) => {
-    const contacts = await ContactsService.getContacts();
+    const { id: owner } = res.locals.user;
+    const { page = 1, limit = 10 } = req.query;
+    const skip = (page - 1) * limit;
+    const contacts = await ContactsService.getContacts(owner, skip, limit);
 
     if (!contacts) {
       res.status(400);
@@ -26,7 +29,8 @@ class ContactsController {
   });
 
   createContact = asyncHandler(async (req, res) => {
-    const contact = await ContactsService.createContact(req.body);
+    const { id: owner } = res.locals.user;
+    const contact = await ContactsService.createContact({ ...req.body, owner });
 
     if (!contact) {
       res.status(400);

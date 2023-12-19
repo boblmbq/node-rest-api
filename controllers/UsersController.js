@@ -1,11 +1,11 @@
 const asyncHandler = require("express-async-handler");
-const AuthService = require("../services/AuthService");
+const UsersService = require("../services/UsersService");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 
-class AuthController {
+class UsersController {
   constructor() {
-    this.service = AuthService;
+    this.service = UsersService;
   }
 
   createUser = asyncHandler(async ({ body }, res) => {
@@ -64,6 +64,24 @@ class AuthController {
     await user.save();
     res.status(204).json({ code: 204, message: "No Content" });
   });
+
+  getCurrentContacts = asyncHandler(async (req, res) => {
+
+    const { id } = res.locals.user;
+
+    const user = await this.service.findUser(id, "_id");
+
+    if (!user) {
+      res.status(401);
+      throw Error("Bad request, unauthorized");
+    }
+
+    res.status(200).json({
+      code: 200,
+      message: "ok",
+      user: { email: user.email, subscription: user.subscription },
+    });
+  });
 }
 
-module.exports = new AuthController();
+module.exports = new UsersController();
