@@ -4,11 +4,19 @@ const asyncHandler = require("express-async-handler");
 class ContactsController {
   getAllContacts = asyncHandler(async (req, res) => {
     const { id: owner } = res.locals.user;
-    
-    const { page = 1, limit = 10 } = req.query;
+
+    const { page = 1, limit = 10, favorite } = req.query;
     const skip = (page - 1) * limit;
 
-    const contacts = await ContactsService.getContacts(owner, skip, limit);
+    const filter = {
+      owner,
+    };
+
+    if (favorite) {
+      filter.favorite = favorite;
+    }
+
+    const contacts = await ContactsService.getContacts(filter, skip, limit);
 
     if (!contacts) {
       res.status(400);
@@ -39,7 +47,7 @@ class ContactsController {
       throw new Error(`Contact with ID: ${id} does not exist`);
     }
 
-    res.status(201).json({ code: 200, message: "Success", data: contact });
+    res.status(201).json({ code: 201, message: "Success", data: contact });
   });
 
   deleteContact = asyncHandler(async (req, res) => {

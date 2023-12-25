@@ -11,7 +11,7 @@ app.use(cors());
 app.use(express.urlencoded({extended: false}))
 app.use(express.json());
 
-app.use("/api/users", require("./routes/api/users"));
+app.use("/users", require("./routes/api/users"));
 
 app.use("/api/contacts", require("./routes/api/contacts"));
 
