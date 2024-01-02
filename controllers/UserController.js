@@ -4,9 +4,13 @@ const HTTPResponse = require("../helpers/HTTPResponse.js");
 const UserService = require("../services/UserService.js");
 const bcrypt = require("bcrypt");
 const fs = require("fs/promises");
-const { join } = require("path");
 const gravatar = require("gravatar");
 const Jimp = require("jimp");
+const uuidv4 = require("uuid").v4;
+const sendEmail = require("../helpers/emailSender.js");
+const { join } = require("path");
+const configPath = join(process.cwd(), "config", ".env");
+require("dotenv").config({ path: configPath });
 
 class UserController {
   constructor() {
@@ -20,11 +24,23 @@ class UserController {
       throw HTTPError(409, "Email in use");
     }
 
-    const avatar = gravatar.url(body.email);
+    const avatarURL = gravatar.url(body.email);
+
+    const verificationToken = uuidv4();
+
     const createdUser = await this.service.createUser({
       ...body,
-      avatarURL: avatar,
+      avatarURL,
+      verificationToken,
     });
+
+    const verifyEmail = {
+      to: createdUser.email,
+      subject: "Verify email",
+      html: `<a target="_blank" href="http://localhost:${process.env.PORT}/users/verify/${verificationToken}">Verify your email</a>`,
+    };
+
+    sendEmail(verifyEmail);
 
     HTTPResponse(res, 201, createdUser);
   };
@@ -113,6 +129,24 @@ class UserController {
     await user.save();
 
     HTTPResponse(res, 200, { email: user.email, avatarURL: user.avatarURL });
+  };
+
+  verificationRequest = async (req, res) => {
+    const { verificationToken } = req.params;
+    const user = await this.service.findUser(
+      verificationToken,
+      "verificationToken"
+    );
+
+    if (!user) {
+      HTTPError(404, "User not found");
+    }
+
+    user.verify = true;
+    user.verificationToken = "null"
+    await user.save();
+
+    HTTPResponse(res, 200, "Verification successful");
   };
 }
 
