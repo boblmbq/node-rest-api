@@ -6,6 +6,7 @@ const {
   loginSchema,
   updateSubsSchema,
   updateAvatarSchema,
+  resendVerify,
 } = require("../../schemas/usersJoiSchema");
 const authenticate = require("../../middlewares/authenticate");
 const UserController = require("../../controllers/UserController");
@@ -19,6 +20,12 @@ router.post(
   "/register",
   validateBody(registerSchema),
   UserController.createUser
+);
+
+router.post(
+  "/verify",
+  validateBody(resendVerify),
+  UserController.resendVerificationRequest
 );
 
 router.post("/login", validateBody(loginSchema), UserController.loginUser);

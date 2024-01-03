@@ -10,6 +10,7 @@ const uuidv4 = require("uuid").v4;
 const sendEmail = require("../helpers/emailSender.js");
 const { join } = require("path");
 const configPath = join(process.cwd(), "config", ".env");
+const asyncHandler = require("express-async-handler");
 require("dotenv").config({ path: configPath });
 
 class UserController {
@@ -17,7 +18,7 @@ class UserController {
     this.service = UserService;
   }
 
-  createUser = async ({ body }, res) => {
+  createUser = asyncHandler(async ({ body }, res) => {
     const user = await this.service.findUser(body.email, "email");
 
     if (user) {
@@ -43,13 +44,17 @@ class UserController {
     sendEmail(verifyEmail);
 
     HTTPResponse(res, 201, createdUser);
-  };
+  });
 
-  loginUser = async ({ body: { email, password } }, res) => {
+  loginUser = asyncHandler(async ({ body: { email, password } }, res) => {
     const user = await this.service.findUser(email, "email");
 
     if (!user || !bcrypt.compare(password, user.password)) {
       throw HTTPError(401);
+    }
+
+    if (!user.verify) {
+      throw HTTPError(400, "User not verified");
     }
 
     const payload = {
@@ -64,9 +69,9 @@ class UserController {
     await user.save();
 
     HTTPResponse(res, 200, { email: user.email, token: user.token });
-  };
+  });
 
-  logout = async (_, res) => {
+  logout = asyncHandler(async (_, res) => {
     const user = await this.service.findUser(res.locals.user.id, "_id");
 
     if (!user) {
@@ -76,9 +81,9 @@ class UserController {
     user.token = null;
     await user.save();
     HTTPResponse(res, 204);
-  };
+  });
 
-  updateSubscription = async ({ body }, res) => {
+  updateSubscription = asyncHandler(async ({ body }, res) => {
     const user = await this.service.findUser(res.locals.user.id, "_id");
 
     if (!user) {
@@ -92,9 +97,9 @@ class UserController {
       email: user.email,
       subscription: user.subscription,
     });
-  };
+  });
 
-  currentUser = async (_, res) => {
+  currentUser = asyncHandler(async (_, res) => {
     const user = await this.service.findUser(res.locals.user.id, "_id");
 
     console.log(user);
@@ -104,9 +109,9 @@ class UserController {
     }
 
     HTTPResponse(res, 200, { ...user, password: "000" });
-  };
+  })
 
-  changeAvatar = async ({ file }, res) => {
+  changeAvatar = asyncHandler(async ({ file }, res) => {
     const user = await this.service.findUser(res.locals.user.id, "_id");
 
     if (!user) {
@@ -129,25 +134,48 @@ class UserController {
     await user.save();
 
     HTTPResponse(res, 200, { email: user.email, avatarURL: user.avatarURL });
-  };
+  })
 
-  verificationRequest = async (req, res) => {
+  verificationRequest = asyncHandler(async (req, res) => {
     const { verificationToken } = req.params;
+
     const user = await this.service.findUser(
       verificationToken,
       "verificationToken"
     );
 
     if (!user) {
-      HTTPError(404, "User not found");
+      throw HTTPError(404, "User not found");
     }
 
     user.verify = true;
-    user.verificationToken = "null"
+    user.verificationToken = "null";
     await user.save();
 
     HTTPResponse(res, 200, "Verification successful");
-  };
+  })
+
+  resendVerificationRequest = asyncHandler(async ({ body }, res) => {
+    const user = await this.service.findUser(body.email, "email ");
+
+    if (!user) {
+      throw HTTPError(400, "User not found");
+    }
+
+    if (!user.verify) {
+      const verifyEmail = {
+        to: user.email,
+        subject: "Verify email",
+        html: `<a target="_blank" href="http://localhost:${process.env.PORT}/users/verify/${user.verificationToken}">Verify your email</a>`,
+      };
+  
+      sendEmail(verifyEmail);
+  
+      HTTPResponse(res, 200, {}, "Verification email sent");
+    }
+    
+    throw HTTPError(400, "Verification has already been passed");
+  })
 }
 
 module.exports = new UserController();
