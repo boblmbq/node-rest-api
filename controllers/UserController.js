@@ -37,8 +37,7 @@ class UserController {
 
     const verifyEmail = {
       to: createdUser.email,
-      subject: "Verify email",
-      html: `<a target="_blank" href="http://localhost:${process.env.PORT}/users/verify/${verificationToken}">Verify your email</a>`,
+
     };
 
     sendEmail(verifyEmail);
