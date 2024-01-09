@@ -1,18 +1,18 @@
 const { Router } = require("express");
 const router = Router();
-const validateBody = require("../../middlewares/validateBody");
 const {
-  registerSchema,
-  loginSchema,
-  updateSubsSchema,
-  updateAvatarSchema,
-  resendVerify,
-} = require("../../schemas/usersJoiSchema");
-const authenticate = require("../../middlewares/authenticate");
-const UserController = require("../../controllers/UserController");
-const upload = require("../../middlewares/upload");
+  userJoiSchema: {
+    registerSchema,
+    loginSchema,
+    updateAvatarSchema,
+    updateSubsSchema,
+    resendVerify,
+  },
+} = require("../../schemas");
+const { authenticate, validateBody, upload } = require("../../middlewares");
+const { UserController } = require("../../controllers");
 
-router.get("/current", authenticate, UserController.currentUser)
+router.get("/current", authenticate, UserController.currentUser);
 
 router.get("/verify/:verificationToken", UserController.verificationRequest);
 

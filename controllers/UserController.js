@@ -1,15 +1,14 @@
 const jwt = require("jsonwebtoken");
-const HTTPError = require("../helpers/HTTPError.js");
-const HTTPResponse = require("../helpers/HTTPResponse.js");
+const { HTTPError, HTTPResponse } = require("../helpers");
 const UserService = require("../services/UserService.js");
 const bcrypt = require("bcrypt");
 const fs = require("fs/promises");
 const gravatar = require("gravatar");
 const Jimp = require("jimp");
 const uuidv4 = require("uuid").v4;
-const sendEmail = require("../helpers/emailSender.js");
 const { join } = require("path");
 const configPath = join(process.cwd(), "config", ".env");
+const EmailService = require("../services/EmailService.js");
 const asyncHandler = require("express-async-handler");
 require("dotenv").config({ path: configPath });
 
@@ -35,12 +34,19 @@ class UserController {
       verificationToken,
     });
 
-    const verifyEmail = {
-      to: createdUser.email,
+    const sendedEmail = await EmailService.sendEmail(
+      createdUser.email,
+      verificationToken
+    );
 
-    };
-
-    sendEmail(verifyEmail);
+    if (!sendedEmail) {
+      HTTPResponse(
+        res,
+        201,
+        createdUser,
+        "User created but verification message has not been sended"
+      );
+    }
 
     HTTPResponse(res, 201, createdUser);
   });
@@ -108,7 +114,7 @@ class UserController {
     }
 
     HTTPResponse(res, 200, { ...user, password: "000" });
-  })
+  });
 
   changeAvatar = asyncHandler(async ({ file }, res) => {
     const user = await this.service.findUser(res.locals.user.id, "_id");
@@ -133,7 +139,7 @@ class UserController {
     await user.save();
 
     HTTPResponse(res, 200, { email: user.email, avatarURL: user.avatarURL });
-  })
+  });
 
   verificationRequest = asyncHandler(async (req, res) => {
     const { verificationToken } = req.params;
@@ -152,7 +158,7 @@ class UserController {
     await user.save();
 
     HTTPResponse(res, 200, "Verification successful");
-  })
+  });
 
   resendVerificationRequest = asyncHandler(async ({ body }, res) => {
     const user = await this.service.findUser(body.email, "email ");
@@ -167,14 +173,14 @@ class UserController {
         subject: "Verify email",
         html: `<a target="_blank" href="http://localhost:${process.env.PORT}/users/verify/${user.verificationToken}">Verify your email</a>`,
       };
-  
+
       sendEmail(verifyEmail);
-  
+
       HTTPResponse(res, 200, {}, "Verification email sent");
     }
-    
+
     throw HTTPError(400, "Verification has already been passed");
-  })
+  });
 }
 
 module.exports = new UserController();

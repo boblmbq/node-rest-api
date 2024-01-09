@@ -1,9 +1,7 @@
 const express = require("express");
-const ContactsController = require("../../controllers/ContactsController");
-const authenticate = require("../../middlewares/authenticate");
-const validateId = require("../../middlewares/validateId");
-const validateBody = require("../../middlewares/validateBody");
-const contactsJoiSchema = require("../../schemas/contactsJoiSchema")
+const { ContactsController } = require("../../controllers");
+const { authenticate, validateId, validateBody } = require("../../middlewares");
+const { contactsJoiSchema } = require("../../schemas");
 const router = express.Router();
 
 router.get("/", authenticate, ContactsController.getAllContacts);
