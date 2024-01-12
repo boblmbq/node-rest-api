@@ -168,13 +168,11 @@ class UserController {
     }
 
     if (!user.verify) {
-      const verifyEmail = {
-        to: user.email,
-        subject: "Verify email",
-        html: `<a target="_blank" href="http://localhost:${process.env.PORT}/users/verify/${user.verificationToken}">Verify your email</a>`,
-      };
+      const sendedEmail = await EmailService.sendEmail(
+        user.email,
+        user.verificationToken
+      );
 
-      sendEmail(verifyEmail);
 
       HTTPResponse(res, 200, {}, "Verification email sent");
     }

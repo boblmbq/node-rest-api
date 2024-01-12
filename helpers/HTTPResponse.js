@@ -1,7 +1,7 @@
 const responseCodes = require("../responses");
 
-module.exports = (res, code, data = {}, message = null, ...thirdPartyRes) => {
-  return res
-    .status(code)
-    .json({ code, message: message ?? responseCodes[code], data });
+module.exports = (res, code, data = {}, message = responseCodes[code]) => {
+  const response = { code, message, data };
+
+  return res.status(code).json(response);
 };
